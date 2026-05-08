@@ -1,0 +1,33 @@
+{
+  "name": "Tab Dev2",
+  "version": "1.1",
+  "manifest_version": 3,
+  "minimum_chrome_version": "120",
+  "description": "create your own ",
+  "permissions": [
+    "storage",
+    "userScripts"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "action": {
+    "default_popup": "index.html",
+    "default_icon": {
+      "16": "icons/logo16.png",
+      "32": "icons/logo32.png",
+      "48": "icons/logo48.png",
+      "128": "icons/logo128.png"
+    }
+  },
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "editor.html"
+      ],
+      "matches": [
+        "<all_urls>"
+      ]
+    }
+  ]
+}
