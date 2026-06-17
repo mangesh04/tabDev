@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { BackBtn } from './backBtn'
 import Button from './button';
 
-const Host = ({ changePopup }) => {
+const Host = ({ changePopup, setSelectedHost, appHost, setAppHost }) => {
     const [currentUrl, setCurrentUrl] = useState('')
     const [baseUrl, setBaseUrl] = useState('')
 
@@ -11,7 +11,7 @@ const Host = ({ changePopup }) => {
             const url = tabs[0].url
             const { protocol, hostname } = new URL(url)
             setCurrentUrl(url)
-            setBaseUrl(`${protocol}//${hostname}`)
+            setBaseUrl(`${protocol}//${hostname}/*`)
         })
     }, [])
 
@@ -19,25 +19,22 @@ const Host = ({ changePopup }) => {
         <>
             <BackBtn popup="LandingPopup" changePopup={() => changePopup("LandingPopup")} />
 
-            <h2>Host</h2>
+            <div className="text-2xl font-medium text-zinc-800 dark:text-zinc-300">Host</div>
 
-            <input
-                type="text"
-                list="hosts"
-                name="host"
-                placeholder="example.com"
-                id="host_inp"
-                className='border-2 rounded-md px-2 py-1'
-            />
+            <select
+                value={appHost}
+                onChange={(e) => setAppHost(e.target.value)}
+                className='border-2 rounded-md px-2 py-1 bg-gray-700 text-white '
+            >
+                <option value={currentUrl}>current tab url</option>
+                <option value={baseUrl}>base url</option>
+            </select>
 
-            <datalist id="hosts">
-                <option value={currentUrl} />
-                <option value={baseUrl} />
-                <option value="localhost" />
-                <option value="127.0.0.1" />
-            </datalist>
+            <Button buttonText="save" onClick={() => {
+                if (!appHost) setAppHost(currentUrl) // if user never changed select
+                changePopup("WidgetManager")
+            }} />
 
-            <Button buttonText="save" onClick={() => changePopup("HostPopup")} padding={'px-2 py-1'} />
         </>
     )
 }

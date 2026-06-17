@@ -13,7 +13,7 @@ Follow these extra rules if it's a widget:
 2. Set margin = 0.
 3. Set user-selection = none.`;
 
-export default function BuildWidget({ changePopup, apiKey, apiConfig, host, isGuest }) {
+export default function BuildWidget({ changePopup, apiKey, apiConfig, appHost, isGuest }) {
   const promptRef = useRef();
   const [widgetName, setWidgetName] = useState("");
   const [script, setScript] = useState("");
@@ -38,6 +38,7 @@ export default function BuildWidget({ changePopup, apiKey, apiConfig, host, isGu
     setGenerating(true);
     setScript("generating...");
 
+
     try {
       let raw;
 
@@ -48,9 +49,13 @@ export default function BuildWidget({ changePopup, apiKey, apiConfig, host, isGu
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ prompt }),
         });
+
         if (!res.ok) throw new Error("Server error");
+
         const data = await res.json();
+
         raw = data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
+
       } else {
         // Own API key via apiAdapter
         raw = await generateExtension({
@@ -74,25 +79,34 @@ export default function BuildWidget({ changePopup, apiKey, apiConfig, host, isGu
   async function handleSaveApply() {
     if (!widgetName.trim()) { setError("name your widget first"); return; }
     if (!script.trim()) { setError("no script to save"); return; }
-    setError("");
 
-    const h = host.current;
+    const h = appHost;
+    const result = await chrome.storage.local.get({ [h]: {} });
 
-    // Register / update userScript
-    const existing = await chrome.userScripts.getScripts({ ids: [widgetName] });
-    if (existing.length > 0) {
-      await chrome.userScripts.update([{ id: widgetName, matches: [h], js: [{ code: script }] }]);
-    } else {
-      await chrome.userScripts.register([{ id: widgetName, matches: [h], js: [{ code: script }] }]);
+    if (result[h][widgetName] !== undefined) {
+      setError("a widget with this name already exists, choose another name");
+      return;
     }
 
-    // Persist to storage
-    const result = await chrome.storage.local.get({ [h]: {} });
+    setError("");
+
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+
+    // run immediately
+    await chrome.userScripts.execute({
+      target: { tabId: tab.id },
+      js: [{ code: script }],
+    });
+
+    // register for future loads
+    await chrome.userScripts.register([{ id: widgetName, matches: [h], js: [{ code: script }] }]);
+
+    // save to storage
     result[h][widgetName] = script;
     await chrome.storage.local.set({ [h]: result[h] });
 
-    changePopup("WidgetManager");
   }
+
 
   return (
     <>
@@ -107,7 +121,9 @@ export default function BuildWidget({ changePopup, apiKey, apiConfig, host, isGu
         rows={3}
       />
 
-      <Button buttonText={generating ? "generating..." : "generate"} onClick={handleGenerate} />
+      <div className="flex gap-5">
+        <Button buttonText={generating ? "generating..." : "generate"} onClick={handleGenerate} />
+      </div>
 
       <textarea
         value={script}
@@ -125,9 +141,13 @@ export default function BuildWidget({ changePopup, apiKey, apiConfig, host, isGu
         className="border-2 border-zinc-800 dark:border-zinc-300 bg-transparent text-zinc-800 dark:text-zinc-300 rounded-md px-2 py-1 w-full text-sm"
       />
 
+
       {error && <p className="text-red-500 text-xs">{error}</p>}
 
-      <Button buttonText="save & apply" onClick={handleSaveApply} variant="primary" />
+      <Button buttonText="apply" onClick={() => {
+        handleSaveApply()
+        changePopup("BuildWidget")
+      }} variant="primary" />
     </>
   );
 }

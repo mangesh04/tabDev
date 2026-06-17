@@ -12,7 +12,11 @@ function App() {
 
   const [popup, changePopup] = useState("LandingPopup");
 
+  const isGuest = useRef(false)
+  const apiConfig = useRef({})
   const apiKey = useRef("");
+
+  const [appHost, setAppHost] = useState('')
 
   return (
 
@@ -22,9 +26,9 @@ function App() {
 
         {popup === "LandingPopup" && <LandingPopup changePopup={changePopup} apiKey={apiKey} />}
 
-        {popup === "HostPopup" && <Host changePopup={changePopup} apiKey={apiKey} />}
+        {popup === "HostPopup" && <Host changePopup={changePopup} apiKey={apiKey} appHost={appHost} setAppHost={setAppHost} />}
 
-        {popup === "WidgetManager" && <WidgetManager changePopup={changePopup} apiKey={apiKey} />}
+        {popup === "WidgetManager" && appHost && <WidgetManager changePopup={changePopup} apiKey={apiKey} appHost={appHost} />}
 
         {popup === "BuildWidget" && <BuildWidget changePopup={changePopup} apiKey={apiKey} />}
 

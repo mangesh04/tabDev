@@ -2,17 +2,18 @@ import WidgetList from "./widget_list";
 import Button from "./button";
 import { BackBtn } from "./backBtn";
 
-function WidgetManager({ changePopup, apiKey }) {
+function WidgetManager({ changePopup,  appHost }) {
     return (
         <>
-            <BackBtn popup="LandingPopup" changePopup={changePopup}/>
+            <BackBtn popup="LandingPopup" changePopup={changePopup} />
 
             <div className="text-2xl font-medium text-zinc-800 dark:text-zinc-300">Widgets</div>
 
             <Button buttonText="build widget" onClick={() => changePopup("BuildWidget")} />
             <WidgetList />
 
-            <Button buttonText="apply"  onClick={() => changePopup("ApplyWidget")} />
+            <WidgetList appHost={appHost} changePopup={changePopup} />
+
         </>
     );
 }
