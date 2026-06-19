@@ -1,6 +1,7 @@
-import { useState } from "react";
-import { BackBtn } from "./backBtn";
+import { useState, useEffect } from "react";
 import { providers } from "./providerConfig";
+import { BackBtn } from './backBtn'
+import Button from './button';
 
 export default function UseApi({ changePopup, apiKey, apiConfig }) {
   const [selectedProvider, setSelectedProvider] = useState("gemini");
@@ -50,7 +51,10 @@ export default function UseApi({ changePopup, apiKey, apiConfig }) {
 
   return (
     <>
-      <BackBtn popup="LandingPopup" changePopup={changePopup} />
+
+      <div className="flex w-full items-center">
+        <BackBtn popup="Settings" changePopup={changePopup} />
+      </div>
 
       <p className="text-2xl font-medium text-zinc-800 dark:text-zinc-300">configure api</p>
 

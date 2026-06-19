@@ -2,10 +2,9 @@ import WidgetList from "./widget_list";
 import Button from "./button";
 import { BackBtn } from "./backBtn";
 
-function WidgetManager({ changePopup,  appHost }) {
+function WidgetManager({ changePopup, appHost }) {
     return (
         <>
-            <BackBtn popup="LandingPopup" changePopup={changePopup} />
 
             <div className="text-2xl font-medium text-zinc-800 dark:text-zinc-300">Widgets</div>
 

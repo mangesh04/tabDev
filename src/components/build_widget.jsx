@@ -2,6 +2,7 @@ import { useRef, useState, useEffect } from "react";
 import { BackBtn } from "./backBtn";
 import Button from "./button";
 import { generateExtension } from "./apiAdapter";
+import SettingsBtn from './settingsBtn'
 
 const SYSTEM_INSTRUCTIONS = `Instructions to create it:
 Output js only.
@@ -77,10 +78,13 @@ export default function BuildWidget({ changePopup, apiKey, apiConfig, appHost, i
   }
 
   async function handleSaveApply() {
+
     if (!widgetName.trim()) { setError("name your widget first"); return; }
+
     if (!script.trim()) { setError("no script to save"); return; }
 
     const h = appHost;
+
     const result = await chrome.storage.local.get({ [h]: {} });
 
     if (result[h][widgetName] !== undefined) {
@@ -110,7 +114,15 @@ export default function BuildWidget({ changePopup, apiKey, apiConfig, appHost, i
 
   return (
     <>
-      <BackBtn popup="WidgetManager" changePopup={changePopup} />
+
+      <div className="flex w-full justify-between items-center">
+
+        <BackBtn popup="WidgetManager" changePopup={changePopup} />
+
+        <SettingsBtn changePopup={changePopup} />
+
+      </div>
+
 
       <div className="text-2xl font-medium text-zinc-800 dark:text-zinc-300">Build Widget</div>
 
@@ -148,6 +160,7 @@ export default function BuildWidget({ changePopup, apiKey, apiConfig, appHost, i
         handleSaveApply()
         changePopup("BuildWidget")
       }} variant="primary" />
+
     </>
   );
 }

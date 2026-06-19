@@ -67,10 +67,15 @@ function WidgetList({ appHost, changePopup }) {
 
   async function handleDelete(widgetName) {
     const h = appHost;
+
     await chrome.userScripts.unregister({ ids: [widgetName] }).catch(() => { });
+
     const result = await chrome.storage.local.get({ [h]: {} });
+
     delete result[h][widgetName];
+
     await chrome.storage.local.set({ [h]: result[h] });
+
     setWidgets((prev) => prev.filter((w) => w.name !== widgetName));
   }
 
