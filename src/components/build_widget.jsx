@@ -3,6 +3,7 @@ import { BackBtn } from "./backBtn";
 import Button from "./button";
 import { generateExtension } from "./apiAdapter";
 import SettingsBtn from './settingsBtn'
+import Settings from './settings';
 
 const SYSTEM_INSTRUCTIONS = `Instructions to create it:
 Output js only.
@@ -14,22 +15,30 @@ Follow these extra rules if it's a widget:
 2. Set margin = 0.
 3. Set user-selection = none.`;
 
-export default function BuildWidget({ changePopup, apiKey, apiConfig, appHost, isGuest }) {
+export default function BuildWidget({ changePopup, apiKey, apiConfig, appHost, isGuest, isEdit, setIsEdit }) {
   const promptRef = useRef();
   const [widgetName, setWidgetName] = useState("");
   const [script, setScript] = useState("");
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState("");
+  const [originalName, setOriginalName] = useState("");
+  const [storageKey, setStorageKey] = useState("");
 
   // Pre-fill if editing an existing widget
   useEffect(() => {
+
+    setStorageKey(appHost)
     const raw = sessionStorage.getItem("edit_widget");
+
     if (raw) {
       const widget = JSON.parse(raw);
       setWidgetName(widget.name);
+      setOriginalName(widget.name);
       setScript(widget.script);
+      setStorageKey(widget.storageKey); // use this for delete
       sessionStorage.removeItem("edit_widget");
     }
+
   }, []);
 
   async function handleGenerate() {
@@ -77,24 +86,42 @@ export default function BuildWidget({ changePopup, apiKey, apiConfig, appHost, i
     }
   }
 
-  async function handleSaveApply() {
+  async function handleDelete(widgetName) {
 
-    if (!widgetName.trim()) { setError("name your widget first"); return; }
+    const h = storageKey;
 
-    if (!script.trim()) { setError("no script to save"); return; }
-
-    const h = appHost;
+    await chrome.userScripts.unregister({ ids: [widgetName] }).catch(() => { });
 
     const result = await chrome.storage.local.get({ [h]: {} });
 
-    if (result[h][widgetName] !== undefined) {
-      setError("a widget with this name already exists, choose another name");
+    delete result[h][widgetName];
+
+    await chrome.storage.local.set({ [h]: result[h] });
+
+  }
+
+  async function handleSaveApply() {
+    if (!widgetName.trim()) { setError("name your widget first"); return; }
+    if (!script.trim()) { setError("no script to save"); return; }
+
+    const h = storageKey;
+    const result = await chrome.storage.local.get({ [h]: {} });
+
+    // conflict check only for new widgets
+    if (!isEdit && result[h][widgetName] !== undefined) {
+      setError("a widget with this name already exists");
       return;
     }
 
     setError("");
 
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    if (isEdit) {
+      await handleDelete(originalName);
+    }
+
+    // fetch fresh AFTER delete
+    const freshResult = await chrome.storage.local.get({ [h]: {} });
 
     // run immediately
     await chrome.userScripts.execute({
@@ -102,65 +129,72 @@ export default function BuildWidget({ changePopup, apiKey, apiConfig, appHost, i
       js: [{ code: script }],
     });
 
-    // register for future loads
     await chrome.userScripts.register([{ id: widgetName, matches: [h], js: [{ code: script }] }]);
 
-    // save to storage
-    result[h][widgetName] = script;
-    await chrome.storage.local.set({ [h]: result[h] });
+    // save using fresh result
+    freshResult[h][widgetName] = script;
+    await chrome.storage.local.set({ [h]: freshResult[h] });
 
+    setIsEdit(true);
   }
+
+  const [showSettings, setShowSettings] = useState(false);
 
 
   return (
-    <>
+    showSettings
+      ? <Settings onClose={() => setShowSettings(false)} appHost={appHost} isGuest={isGuest} setShowSettings={setShowSettings} setStorageKey={setStorageKey} isEdit={isEdit} />
+      :
+      <>
 
-      <div className="flex w-full justify-between items-center">
+        <div className="flex w-full justify-between items-center">
 
-        <BackBtn popup="WidgetManager" changePopup={changePopup} />
+          <BackBtn popup="WidgetManager" changePopup={changePopup} />
 
-        <SettingsBtn changePopup={changePopup} />
+          <SettingsBtn setShowSettings={setShowSettings} />
 
-      </div>
-
-
-      <div className="text-2xl font-medium text-zinc-800 dark:text-zinc-300">Build Widget</div>
-
-      <textarea
-        ref={promptRef}
-        className="border-2 border-zinc-800 dark:border-zinc-300 bg-transparent text-zinc-800 dark:text-zinc-300 rounded-sm p-2 w-full resize-y text-sm"
-        placeholder="explain what to build..."
-        rows={3}
-      />
-
-      <div className="flex gap-5">
-        <Button buttonText={generating ? "generating..." : "generate"} onClick={handleGenerate} />
-      </div>
-
-      <textarea
-        value={script}
-        onChange={(e) => setScript(e.target.value)}
-        className="border-2 border-zinc-800 dark:border-zinc-300 bg-zinc-900 text-green-400 rounded-sm p-2 w-full resize-y font-mono text-xs"
-        placeholder="generated code appears here — you can edit it"
-        rows={8}
-      />
-
-      <input
-        type="text"
-        value={widgetName}
-        onChange={(e) => setWidgetName(e.target.value)}
-        placeholder="name this widget"
-        className="border-2 border-zinc-800 dark:border-zinc-300 bg-transparent text-zinc-800 dark:text-zinc-300 rounded-md px-2 py-1 w-full text-sm"
-      />
+        </div>
 
 
-      {error && <p className="text-red-500 text-xs">{error}</p>}
+        <div className="text-2xl font-medium text-zinc-800 dark:text-zinc-300">Build Widget</div>
 
-      <Button buttonText="apply" onClick={() => {
-        handleSaveApply()
-        changePopup("BuildWidget")
-      }} variant="primary" />
+        <textarea
+          ref={promptRef}
+          className="border-2 border-zinc-800 dark:border-zinc-300 bg-transparent text-zinc-800 dark:text-zinc-300 rounded-sm p-2 w-full resize-y text-sm"
+          placeholder="explain what to build..."
+          rows={3}
+        />
 
-    </>
+        <div className="flex gap-5">
+          <Button buttonText={generating ? "generating..." : "generate"} onClick={handleGenerate} />
+        </div>
+
+        <textarea
+          value={script}
+          onChange={(e) => setScript(e.target.value)}
+          className="border-2 border-zinc-800 dark:border-zinc-300 bg-zinc-900 text-green-400 rounded-sm p-2 w-full resize-y font-mono text-xs"
+          placeholder="generated code appears here — you can edit it"
+          rows={8}
+        />
+
+        <input
+          type="text"
+          value={widgetName}
+
+          onChange={(e) => setWidgetName(e.target.value)}
+
+          placeholder="name this widget"
+          className="border-2 border-zinc-800 dark:border-zinc-300 bg-transparent text-zinc-800 dark:text-zinc-300 rounded-md px-2 py-1 w-full text-sm"
+        />
+
+
+        {error && <p className="text-red-500 text-xs">{error}</p>}
+
+        <Button buttonText="apply" onClick={() => {
+          handleSaveApply()
+          changePopup("BuildWidget")
+        }} variant="primary" />
+
+      </>
   );
 }

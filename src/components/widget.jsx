@@ -1,6 +1,7 @@
 import { EditIcon, DeleteIcon } from "./icons";
 
 export default function Widget({ widget, onToggle, onDelete, onEdit }) {
+
   const { name, enabled } = widget;
 
   return (

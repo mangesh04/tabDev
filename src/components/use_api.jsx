@@ -3,7 +3,8 @@ import { providers } from "./providerConfig";
 import { BackBtn } from './backBtn'
 import Button from './button';
 
-export default function UseApi({ changePopup, apiKey, apiConfig }) {
+export default function UseApi({ apiKey, apiConfig, setShowUseApi }) {
+
   const [selectedProvider, setSelectedProvider] = useState("gemini");
   const [selectedModel, setSelectedModel] = useState(providers["gemini"].models[0]);
   const [error, setError] = useState("");
@@ -36,7 +37,7 @@ export default function UseApi({ changePopup, apiKey, apiConfig }) {
     try {
       // Persist api_key for future sessions
       await chrome.storage.local.set({ api_key: apiKey.current });
-      changePopup("HostPopup");
+
     } catch (err) {
       setError(err.message || "something went wrong");
     } finally {
@@ -53,7 +54,7 @@ export default function UseApi({ changePopup, apiKey, apiConfig }) {
     <>
 
       <div className="flex w-full items-center">
-        <BackBtn popup="Settings" changePopup={changePopup} />
+        <BackBtn setShow={setShowUseApi} />
       </div>
 
       <p className="text-2xl font-medium text-zinc-800 dark:text-zinc-300">configure api</p>

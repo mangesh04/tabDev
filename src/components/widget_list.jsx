@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import Widget from "./widget";
 
-function WidgetList({ appHost, changePopup }) {
+function WidgetList({ appHost, changePopup, setIsEdit }) {
   const [widgets, setWidgets] = useState([]); // [{ name, script, enabled }]
 
   const loadWidgets = useCallback(async () => {
@@ -18,19 +18,26 @@ function WidgetList({ appHost, changePopup }) {
 
     const merged = { ...r2[base], ...r1[h] };
 
-    console.log(merged)
-
     const storedIds = Object.keys(merged);
     const runningArr = await chrome.userScripts.getScripts({ ids: storedIds });
     const runningIds = new Set(runningArr.map((s) => s.id));
 
-    setWidgets(
-      storedIds.map((name) => ({
+    setWidgets([
+      ...Object.keys(r2[base]).map((name) => ({
         name,
-        script: merged[name],
+        script: r2[base][name],
         enabled: runningIds.has(name),
-      }))
-    );
+        storageKey: base,        // ← came from base
+      })),
+      ...Object.keys(r1[h]).map((name) => ({
+        name,
+        script: r1[h][name],
+        enabled: runningIds.has(name),
+        storageKey: h,           // ← came from current url
+      })),
+    ]);
+
+
   }, [appHost]);
 
   useEffect(() => {
@@ -81,7 +88,14 @@ function WidgetList({ appHost, changePopup }) {
 
   function handleEdit(widget) {
     // Store edit context in sessionStorage so BuildWidget can pick it up
-    sessionStorage.setItem("edit_widget", JSON.stringify(widget));
+
+    sessionStorage.setItem("edit_widget", JSON.stringify({
+      name: widget.name,
+      script: widget.script,
+      storageKey: widget.storageKey  // pass the exact key it's stored under
+    }));
+
+    setIsEdit(true);
     changePopup("BuildWidget");
   }
 

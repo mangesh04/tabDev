@@ -1,8 +1,12 @@
 import WidgetList from "./widget_list";
 import Button from "./button";
 import { BackBtn } from "./backBtn";
+import { useEffect } from "react";
 
-function WidgetManager({ changePopup, appHost }) {
+function WidgetManager({ changePopup, appHost, setIsEdit }) {
+    useEffect(() => {
+        setIsEdit(false);
+    }, [])
     return (
         <>
 
@@ -11,7 +15,7 @@ function WidgetManager({ changePopup, appHost }) {
             <Button buttonText="build widget" onClick={() => changePopup("BuildWidget")} />
             <WidgetList />
 
-            <WidgetList appHost={appHost} changePopup={changePopup} />
+            <WidgetList appHost={appHost} changePopup={changePopup} setIsEdit={setIsEdit} />
 
         </>
     );

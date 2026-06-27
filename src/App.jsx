@@ -1,13 +1,11 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react';
 import { useRef } from "react";
 import './App.css';
 import LandingPopup from './components/landing';
 import WidgetManager from './components/widget_manager';
 import BuildWidget from './components/build_widget';
-import UseApi from './components/use_api';
 import MainContainer from './components/mainContainer';
 import Host from './components/host';
-import Settings from './components/settings';
 
 function App() {
 
@@ -18,7 +16,7 @@ function App() {
   const apiKey = useRef("");
 
   const [appHost, setAppHost] = useState('')
-
+  const [isEdit, setIsEdit] = useState(false)
 
   const [currentUrl, setCurrentUrl] = useState('')
   const [baseUrl, setBaseUrl] = useState('')
@@ -36,7 +34,8 @@ function App() {
     })
   }, [])
 
-  console.log(appHost)
+  //  needs to change edit logic apply on edit should work differently
+  //comming back from
 
   return (
 
@@ -48,13 +47,12 @@ function App() {
 
         {/* {popup === "HostPopup" && <Host changePopup={changePopup} apiKey={apiKey} appHost={appHost} setAppHost={setAppHost} />} */}
 
-        {popup === "WidgetManager"  && <WidgetManager changePopup={changePopup} appHost={appHost} />}
 
-        {popup === "BuildWidget" && <BuildWidget changePopup={changePopup} apiKey={apiKey} appHost={appHost} setAppHost={setAppHost} />}
+        {/* we need currentUrl aswell as base inrrepective what it's set too  */}
+        {popup === "WidgetManager" && <WidgetManager changePopup={changePopup} appHost={currentUrl} setIsEdit={setIsEdit} />}
 
-        {popup === "UseApi" && <UseApi changePopup={changePopup} apiKey={apiKey} />}
+        {popup === "BuildWidget" && <BuildWidget changePopup={changePopup} apiKey={apiKey} appHost={appHost} isEdit={isEdit} setIsEdit={setIsEdit} />}
 
-        {popup === "Settings"  && <Settings changePopup={changePopup} appHost={appHost} setAppHost={setAppHost} isGuest={isGuest}  />}
 
       </MainContainer>
     </>
